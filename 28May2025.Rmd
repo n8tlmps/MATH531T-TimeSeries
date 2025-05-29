@@ -1,0 +1,87 @@
+---
+title: "28May2025"
+author: "Nate Talampas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(astsa)
+library(ggplot2)
+library(dplyr)
+library(tidyquant)
+library(seismicRoll)
+```
+
+```{r}
+##################
+# --- White Noise
+##################
+{
+set.seed(2)
+w <- rnorm(500)
+plot(w,type='s')
+abline(h=0,col='red',lty=2,lwd=2)
+}
+
+```
+
+```{r}
+##################
+# --- Random Walk
+##################
+{
+set.seed(1)
+rw = c(0)
+for(i in 2:500){
+  rw[i] = rw[i-1] + sample(c(-1,1),1) #different noise term
+}
+plot(rw,type='s')
+abline(h=0,col='red',lty=2,lwd=2)
+  ## More efficiently
+#set.seed(1)
+#n = 500
+#e = sample(c(-1,1),(n-1),replace= TRUE) 
+#rw[2:n] =  cumsum(e)
+#lines(rw, col=2)
+}
+```
+
+```{r}
+##################
+# --- Moving Average
+##################
+
+# smooths the function through this filtering process
+
+# -- on White Noise 
+w3 <- stats::filter(w, filter = rep(1/3, 3), sides = 2) 
+plot(w,type='s')
+abline(h=0,col='red',lty=2,lwd=2)
+lines(w3, col = "blue")
+
+```
+
+The black is the original white noise, which is making it more volatile.
+
+```{r}
+##################
+# --- Autoregressive Moving Average
+##################
+
+# -- on White Noise 
+war <- stats::filter(w, filter =c(1,-0.9), method = "recursive")
+plot(w,type='s', ylim=c(-6,6))
+abline(h=0,col='red',lty=2,lwd=2)
+lines(war, col = "blue")
+
+# what is filter for autoregression doing? 
+# sets the coefficients for the lags
+```
+
+w is black, the original white noise. and the blue is the moving average. moving average reduces something...
+

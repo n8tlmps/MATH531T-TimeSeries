@@ -1,0 +1,58 @@
+---
+title: "NatureofTimeSeries"
+author: "Nate Talampas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Global Warming
+#install.packages("astsa")
+library(astsa)
+
+tsplot(cbind(gtemp_land, gtemp_ocean), spaghetti = TRUE,
+       col=astsa.col(c(4,2),.7), pch=c(20,18), type="o", ylab="\u00B0C",
+       main = "Global Surface Temperature Anomalies", addLegend=T,
+       location="topleft", legend=c("Land Surface", "Sea Surface")
+       )
+
+```
+
+# Simulating the normal stochastic process
+
+```{r}
+sim <- matrix(0, nrow=100, ncol=4)
+t <- seq(1:4)
+
+for (i in 1:100){
+  sim[i, ] = rnorm(4, mean=t+10, 1)
+}
+```
+
+```{r}
+plot(t, sim[1, ], col = 2, type="l", ylim = c(10, 16), xlab="time", ylab="X",
+     main = "Simple Gaussian Process")
+
+for (i in 2:100){
+  lines(t, sim[i,], col=i,)
+}
+
+# plotting mean function
+lines(t, t+10, col=4, lwd=8)
+```
+
+```{r}
+plot(density(sim[,1]), main= "X_1 realizations")
+abline(v = t[1] + 10, col = 4, lwd = 3)
+abline(v = t[1] + 10 - (qnorm(0.025)), lwd=3)
+abline(v = t[1] + 10 + (qnorm(0.025)), lwd=3)
+```
+
+
+
+
+
