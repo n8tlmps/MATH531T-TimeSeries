@@ -1,0 +1,189 @@
+---
+title: "29May2025"
+author: "Nate Talampas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The dataset AirPassengers includes monthly totals of international flights between 1949-1960. Fit a regression model to the data.
+
+```{r}
+data(AirPassengers) # Calling the built-in R data
+head(AirPassengers)
+```
+
+# Plot of the Data (log transformation)
+
+Let $Y_t$ show the total number of international passengers at time $t$.
+
+```{r}
+plot(AirPassengers)
+```
+
+```{r}
+plot(log(AirPassengers))
+```
+
+# Models with either trend or seasonal component
+
+$log(Y_t) = \beta_0 + \beta_1 t + R_t$
+
+
+```{r}
+tim <- time(AirPassengers) #creates vector of time that TS was collected
+cycle(AirPassengers) #gives the positions in the cycle of each observation
+month <- as.factor(cycle(AirPassengers))
+reg1 <- lm(log(AirPassengers)~tim)
+
+plot(log(AirPassengers))
+points(tim,predict.lm(reg1),type='l',col='red')
+```
+
+$log(Y_t) = \beta_0 + \beta_1 x_1 + ... \beta_{11} x_{11} + R_t$
+
+```{r}
+tim <- time(AirPassengers) #creates vector of time that TS was collected
+cycle(AirPassengers) #gives the positions in the cycle of each observation
+month <- as.factor(cycle(AirPassengers))
+reg1 <- lm(log(AirPassengers)~ month)
+
+plot(log(AirPassengers))
+points(tim,predict.lm(reg1),type='l',col='red')
+```
+
+# Regression model
+
+- Use a model with both trend and seasonal component
+$log(Y_t) = m_t + S_t + R_t$
+
+- We fit the model
+
+$$ \log(Y_t) = \beta_0 + \beta_1 t + \mathrm{seasonal\ component} + R_t $$
+
+where $R_t$ is the noise $R_t ~ N(0, \sigma^2) (independent)$
+
+- Having monthly data, the seasonal component includes 11 binary explanatory variables (why?)
+
+I think because month is a factor variable and needs a reference.
+
+# Linear Trend
+
+$log(Y_t) = \beta_0 + \beta_1 t + \text{seasonal component} + R_t$
+
+$\text{seasonal component} = \beta_2 X_1 + \beta_3 X_2 + ... + \beta_{12} X_{11}$
+
+where $X_1, X_2, ..., X_{11}$ are binary variables. i.e. $X_i \in \{0, 1\}$
+
+To introduce a seasonal component with period, $d$, $d-1$ parameters are added to the regression model
+
+# The Fit of the Model
+
+$$ Y_t = \text{linear trend} + \text{seasonal component} + R_t$$
+
+```{r}
+#tim <- time(AirPassengers) #creates vector of time that TS was collected
+#cycle(AirPassengers) #gives the positions in the cycle of each observation
+month <- as.factor(cycle(AirPassengers))
+reg1 <- lm(log(AirPassengers)~tim+month)
+
+plot(log(AirPassengers))
+points(tim,predict.lm(reg1),type='l',col='red')
+```
+
+
+```{r}
+par(mfrow = c(2, 2))  # 2x2 layout
+
+# 1. Fitted vs Residuals
+plot(reg1$fitted.values, reg1$residuals,
+     main = "Fitted vs Residuals",
+     xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+# 2. Normal Q-Q plot
+qqnorm(reg1$residuals, main = "Normal Q-Q Plot")
+qqline(reg1$residuals, col = "red")
+
+# 3. Index vs Residuals
+plot(seq_along(reg1$residuals), reg1$residuals,
+     main = "Index vs Residuals",
+     xlab = "Index", ylab = "Residuals", type = "p")
+abline(h = 0, col = "red", lty = 2)
+
+# 4. Residuals Time Series
+acf(reg1$residuals, main = "ACF of Residuals")
+```
+
+```{r}
+par(mfrow = c(2, 2))  # 2x2 layout
+plot(reg1$fitted, reg1$residuals) # plot of fitted values vs residuals 
+qqnorm(reg1$residuals) #qq-plot of residuals
+qqline(reg1$residuals) # plotting the line, along which the dots in qq-plot should lie 
+plot(reg1$residuals) # plotting the residuals vs time
+abline(h=0,lty=2) # plotting a horizontal line at 0
+acf(reg1$residuals) #sample acf plot of residuals
+
+```
+
+The residuals indicate the presence of a quadratic relationship.
+
+Exponentiate the previous graph:
+
+```{r}
+plot(AirPassengers)
+points(tim,exp(predict.lm(reg1)),type='l',col='red')
+```
+
+We don't want a consistent gap => correlation still happening.
+
+# Quadratic Trend
+
+$$ log(Y_t) = \beta_0 + \beta_1 t + \beta_2 t^2 + \text{seasonal component} + R_t$$
+$$ \text{seasonal component} = \beta_3 X_1 + \beta_4 X_2 + ... + \beta_{13} X_{11}$$
+```{r}
+tim2 <- tim^2
+reg2 <- lm(log(AirPassengers)~tim+tim2+month)
+summary(reg2)
+
+```
+
+```{r}
+plot(log(AirPassengers))
+points(tim,predict.lm(reg2),type='l',col='red')
+#dev.off()
+```
+
+Exponentiate the previous graph.
+
+```{r}
+plot(AirPassengers)
+points(tim,exp(predict.lm(reg2)),type='l',col='red')
+```
+
+```{r}
+par(mfrow = c(2, 2))  # 2x2 layout
+
+# 1. Fitted vs Residuals
+plot(reg2$fitted.values, reg2$residuals,
+     main = "Fitted vs Residuals",
+     xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0, col = "red", lty = 2)
+
+# 2. Normal Q-Q plot
+qqnorm(reg2$residuals, main = "Normal Q-Q Plot")
+qqline(reg2$residuals, col = "red")
+
+# 3. Index vs Residuals
+plot(seq_along(reg2$residuals), reg2$residuals,
+     main = "Index vs Residuals",
+     xlab = "Index", ylab = "Residuals", type = "p")
+abline(h = 0, col = "red", lty = 2)
+
+# 4. Residuals Time Series
+acf(reg2$residuals, main = "ACF of Residuals")
+```
+
